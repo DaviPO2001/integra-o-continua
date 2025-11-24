@@ -22,10 +22,10 @@ jobs:
         go-version: '1.22'
 
     - name: Inicia Banco
-      run: docker compose up -d postgress
+      run: sudo docker compose up -d postgress
     
     - name: Lint
-      run: docker run --rm itv $(pwd):app -w /app golangci/golangci-lint golangci run controllers/ database/ models/ routers/
+      run: sudo docker run --rm itv $(pwd):app -w /app golangci/golangci-lint golangci run controllers/ database/ models/ routers/
 
     - name: Test
       run: go test -v main_test.go
