@@ -38,12 +38,19 @@ func DeletaAlunoMock() {
 func TestVerificaStatusCodeDaSaudacaoComParametro(t *testing.T) {
 	r := SetupDasRotasDeTeste()
 	r.GET("/:nome", controllers.Saudacoes)
-	req, _ := http.NewRequest("GET", "/gui", nil)
+	req, err := http.NewRequest("GET", "/gui", nil)
+	if err != nil {
+		t.Fatalf("Erro ao criar requisição: %v", err)
+	}
 	resposta := httptest.NewRecorder()
 	r.ServeHTTP(resposta, req)
 	assert.Equal(t, http.StatusOK, resposta.Code, "Deveriam ser iguais")
+
 	mockDaResposta := `{"API diz":"E ai gui, Tudo beleza?"}`
-	respostaBody, _ := ioutil.ReadAll(resposta.Body)
+	respostaBody, err := ioutil.ReadAll(resposta.Body)
+	if err != nil {
+		t.Fatalf("Erro ao ler resposta: %v", err)
+	}
 	assert.Equal(t, mockDaResposta, string(respostaBody))
 }
 
@@ -53,7 +60,10 @@ func TestListaTodosOsAlunosHanlder(t *testing.T) {
 	defer DeletaAlunoMock()
 	r := SetupDasRotasDeTeste()
 	r.GET("/alunos", controllers.TodosAlunos)
-	req, _ := http.NewRequest("GET", "/alunos", nil)
+	req, err := http.NewRequest("GET", "/alunos", nil)
+	if err != nil {
+		t.Fatalf("Erro ao criar requisição: %v", err)
+	}
 	resposta := httptest.NewRecorder()
 	r.ServeHTTP(resposta, req)
 	assert.Equal(t, http.StatusOK, resposta.Code)
@@ -65,7 +75,10 @@ func TestBucaAlunoPorCPFHandler(t *testing.T) {
 	defer DeletaAlunoMock()
 	r := SetupDasRotasDeTeste()
 	r.GET("/alunos/cpf/:cpf", controllers.BuscaAlunoPorCPF)
-	req, _ := http.NewRequest("GET", "/alunos/cpf/12345678901", nil)
+	req, err := http.NewRequest("GET", "/alunos/cpf/12345678901", nil)
+	if err != nil {
+		t.Fatalf("Erro ao criar requisição: %v", err)
+	}
 	resposta := httptest.NewRecorder()
 	r.ServeHTTP(resposta, req)
 	assert.Equal(t, http.StatusOK, resposta.Code)
@@ -78,11 +91,18 @@ func TestBuscaAlunoPorIDHandler(t *testing.T) {
 	r := SetupDasRotasDeTeste()
 	r.GET("/alunos/:id", controllers.BuscarAlunoPorID)
 	pathDaBusca := "/alunos/" + strconv.Itoa(ID)
-	req, _ := http.NewRequest("GET", pathDaBusca, nil)
+	req, err := http.NewRequest("GET", pathDaBusca, nil)
+	if err != nil {
+		t.Fatalf("Erro ao criar requisição: %v", err)
+	}
 	resposta := httptest.NewRecorder()
 	r.ServeHTTP(resposta, req)
+
 	var alunoMock models.Aluno
-	json.Unmarshal(resposta.Body.Bytes(), &alunoMock)
+	if err := json.Unmarshal(resposta.Body.Bytes(), &alunoMock); err != nil {
+		t.Fatalf("Erro ao fazer Unmarshal: %v", err)
+	}
+
 	assert.Equal(t, "Nome do Aluno Teste", alunoMock.Nome, "Os nomes devem ser iguais")
 	assert.Equal(t, "12345678901", alunoMock.CPF)
 	assert.Equal(t, "123456789", alunoMock.RG)
@@ -95,7 +115,10 @@ func TestDeletaAlunoHandler(t *testing.T) {
 	r := SetupDasRotasDeTeste()
 	r.DELETE("/alunos/:id", controllers.DeletarAluno)
 	pathDeBusca := "/alunos/" + strconv.Itoa(ID)
-	req, _ := http.NewRequest("DELETE", pathDeBusca, nil)
+	req, err := http.NewRequest("DELETE", pathDeBusca, nil)
+	if err != nil {
+		t.Fatalf("Erro ao criar requisição: %v", err)
+	}
 	resposta := httptest.NewRecorder()
 	r.ServeHTTP(resposta, req)
 	assert.Equal(t, http.StatusOK, resposta.Code)
@@ -107,14 +130,26 @@ func TestEditaUmAlunoHandler(t *testing.T) {
 	defer DeletaAlunoMock()
 	r := SetupDasRotasDeTeste()
 	r.PATCH("/alunos/:id", controllers.EditarAluno)
+
 	aluno := models.Aluno{Nome: "Nome do Aluno Teste", CPF: "47123456789", RG: "123456700"}
-	valorJson, _ := json.Marshal(aluno)
+	valorJson, err := json.Marshal(aluno)
+	if err != nil {
+		t.Fatalf("Erro ao fazer Marshal: %v", err)
+	}
+
 	pathParaEditar := "/alunos/" + strconv.Itoa(ID)
-	req, _ := http.NewRequest("PATCH", pathParaEditar, bytes.NewBuffer(valorJson))
+	req, err := http.NewRequest("PATCH", pathParaEditar, bytes.NewBuffer(valorJson))
+	if err != nil {
+		t.Fatalf("Erro ao criar requisição: %v", err)
+	}
 	resposta := httptest.NewRecorder()
 	r.ServeHTTP(resposta, req)
+
 	var alunoMockAtualizado models.Aluno
-	json.Unmarshal(resposta.Body.Bytes(), &alunoMockAtualizado)
+	if err := json.Unmarshal(resposta.Body.Bytes(), &alunoMockAtualizado); err != nil {
+		t.Fatalf("Erro ao fazer Unmarshal: %v", err)
+	}
+
 	assert.Equal(t, "47123456789", alunoMockAtualizado.CPF)
 	assert.Equal(t, "123456700", alunoMockAtualizado.RG)
 	assert.Equal(t, "Nome do Aluno Teste", alunoMockAtualizado.Nome)
